@@ -1,0 +1,6 @@
+.venv/
+__pycache__/
+*.pyc
+observability/calls.db
+training/output/
+.DS_Store

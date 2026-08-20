@@ -1,0 +1,7 @@
+-r requirements.txt
+torch>=2.2
+transformers>=4.44
+peft>=0.12
+trl>=0.10
+accelerate>=0.33
+datasets>=2.20
