@@ -12,6 +12,11 @@ adapting it to one task via LoRA, serving it efficiently, and proving with a
 real, execution-based eval that a cheap specialist is competitive with (or
 better than) prompting a frontier model for this narrow job.
 
+**[Try the interactive demo](https://claude.ai/code/artifact/1509953f-d6ee-4a53-972b-60a55cf41731)**
+— click through all 28 real eval questions and see the specialist's actual
+generated SQL, latency, and result rows next to the frontier baseline. No
+install required.
+
 ## Why this exists
 
 Most "AI portfolio" text-to-SQL projects are LangChain quickstarts. Two
