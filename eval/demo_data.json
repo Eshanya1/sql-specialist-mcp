@@ -1,0 +1,776 @@
+[
+  {
+    "id": "eval-0000",
+    "category": "simple_filter",
+    "question": "Count the orders that are currently shipped.",
+    "gold_sql": "SELECT COUNT(*) FROM orders WHERE status = 'shipped'",
+    "pred_sql": "SELECT COUNT(*) FROM orders WHERE status = 'shipped'",
+    "latency_ms": 1147.9,
+    "correct": true,
+    "result_rows": [
+      [
+        144
+      ]
+    ],
+    "result_row_count": 1,
+    "result_truncated": false
+  },
+  {
+    "id": "eval-0001",
+    "category": "aggregation",
+    "question": "How many orders does each customer have with status 'cancelled'? Show customer name and count.",
+    "gold_sql": "SELECT c.name, COUNT(*) AS order_count FROM customers c JOIN orders o ON o.customer_id = c.customer_id WHERE o.status = 'cancelled' GROUP BY c.customer_id ORDER BY order_count DESC",
+    "pred_sql": "SELECT c.name, COUNT(*) AS order_count FROM customers c JOIN orders o ON o.customer_id = c.customer_id WHERE o.status = 'cancelled' GROUP BY c.customer_id ORDER BY order_count DESC",
+    "latency_ms": 279.5,
+    "correct": true,
+    "result_rows": [
+      [
+        "Maya Patel",
+        2
+      ],
+      [
+        "Layla Smith",
+        2
+      ],
+      [
+        "Ines Rossi",
+        2
+      ],
+      [
+        "Omar Mueller",
+        2
+      ],
+      [
+        "Ines Khan",
+        2
+      ],
+      [
+        "Theo Chen",
+        2
+      ]
+    ],
+    "result_row_count": 72,
+    "result_truncated": true
+  },
+  {
+    "id": "eval-0002",
+    "category": "join",
+    "question": "List support tickets with priority 'urgent' along with the customer's name and the assigned employee's name.",
+    "gold_sql": "SELECT t.ticket_id, c.name AS customer_name, e.name AS employee_name FROM support_tickets t JOIN customers c ON c.customer_id = t.customer_id LEFT JOIN employees e ON e.employee_id = t.assigned_employee_id WHERE t.priority = 'urgent'",
+    "pred_sql": "SELECT t.ticket_id, c.name AS customer_name, e.name AS employee_name FROM support_tickets t JOIN customers c ON c.customer_id = t.customer_id LEFT JOIN employees e ON e.employee_id = t.assigned_employee_id WHERE t.priority = 'urgent'",
+    "latency_ms": 320.6,
+    "correct": true,
+    "result_rows": [
+      [
+        72,
+        "Maya Khan",
+        "Chloe Patel"
+      ],
+      [
+        80,
+        "Ethan Kim",
+        "Liam Chen"
+      ]
+    ],
+    "result_row_count": 2,
+    "result_truncated": false
+  },
+  {
+    "id": "eval-0003",
+    "category": "aggregation",
+    "question": "How many orders does each customer have with status 'pending'? Show customer name and count.",
+    "gold_sql": "SELECT c.name, COUNT(*) AS order_count FROM customers c JOIN orders o ON o.customer_id = c.customer_id WHERE o.status = 'pending' GROUP BY c.customer_id ORDER BY order_count DESC",
+    "pred_sql": "SELECT c.name, COUNT(*) AS order_count FROM customers c JOIN orders o ON o.customer_id = c.customer_id WHERE o.status = 'pending' GROUP BY c.customer_id ORDER BY order_count DESC",
+    "latency_ms": 273.1,
+    "correct": true,
+    "result_rows": [
+      [
+        "Kai Patel",
+        3
+      ],
+      [
+        "Nadia Nakamura",
+        2
+      ],
+      [
+        "Priya Rossi",
+        2
+      ],
+      [
+        "Ines Silva",
+        2
+      ],
+      [
+        "Lucas Silva",
+        2
+      ],
+      [
+        "Theo Patel",
+        2
+      ]
+    ],
+    "result_row_count": 66,
+    "result_truncated": true
+  },
+  {
+    "id": "eval-0004",
+    "category": "simple_filter",
+    "question": "Show all customer names where the country is Brazil.",
+    "gold_sql": "SELECT name FROM customers WHERE country = 'Brazil'",
+    "pred_sql": "SELECT name FROM customers WHERE country = 'Brazil'",
+    "latency_ms": 148.0,
+    "correct": true,
+    "result_rows": [
+      [
+        "Ethan Garcia"
+      ],
+      [
+        "Lucas Khan"
+      ],
+      [
+        "Jin Rossi"
+      ],
+      [
+        "Chloe Patel"
+      ],
+      [
+        "Kai Kim"
+      ],
+      [
+        "Jin Mueller"
+      ]
+    ],
+    "result_row_count": 47,
+    "result_truncated": true
+  },
+  {
+    "id": "eval-0005",
+    "category": "simple_filter",
+    "question": "How many orders have status 'cancelled'?",
+    "gold_sql": "SELECT COUNT(*) FROM orders WHERE status = 'cancelled'",
+    "pred_sql": "SELECT COUNT(*) FROM orders WHERE status = 'cancelled'",
+    "latency_ms": 153.3,
+    "correct": true,
+    "result_rows": [
+      [
+        83
+      ]
+    ],
+    "result_row_count": 1,
+    "result_truncated": false
+  },
+  {
+    "id": "eval-0006",
+    "category": "multi_join",
+    "question": "For 'gold'-tier customers, list each order along with the product names and quantities purchased.",
+    "gold_sql": "SELECT o.order_id, c.name AS customer_name, p.name AS product_name, oi.quantity FROM customers c JOIN orders o ON o.customer_id = c.customer_id JOIN order_items oi ON oi.order_id = o.order_id JOIN products p ON p.product_id = oi.product_id WHERE c.tier = 'gold'",
+    "pred_sql": "SELECT o.order_id, c.name AS customer_name, p.name AS product_name, oi.quantity FROM customers c JOIN orders o ON o.customer_id = c.customer_id JOIN order_items oi ON oi.order_id = o.order_id JOIN products p ON p.product_id = oi.product_id WHERE c.tier = 'gold'",
+    "latency_ms": 369.4,
+    "correct": true,
+    "result_rows": [
+      [
+        1,
+        "Noah Silva",
+        "Yoga Mat",
+        1
+      ],
+      [
+        2,
+        "Noah Silva",
+        "Poetry Collection",
+        2
+      ],
+      [
+        2,
+        "Noah Silva",
+        "Deep Learning textbook",
+        2
+      ],
+      [
+        2,
+        "Noah Silva",
+        "Ergonomic Chair",
+        1
+      ],
+      [
+        20,
+        "Lucas Smith",
+        "Foam Roller",
+        2
+      ],
+      [
+        20,
+        "Lucas Smith",
+        "Deep Learning textbook",
+        2
+      ]
+    ],
+    "result_row_count": 610,
+    "result_truncated": true
+  },
+  {
+    "id": "eval-0007",
+    "category": "top_n",
+    "question": "Show the top 5 customers by total spend on delivered orders.",
+    "gold_sql": "SELECT c.name, ROUND(SUM(oi.quantity * oi.unit_price), 2) AS total_spent FROM customers c JOIN orders o ON o.customer_id = c.customer_id AND o.status = 'delivered' JOIN order_items oi ON oi.order_id = o.order_id GROUP BY c.customer_id ORDER BY total_spent DESC LIMIT 5",
+    "pred_sql": "SELECT c.name, ROUND(SUM(o.total), 2) AS total_spent FROM customers c JOIN orders o ON o.customer_id = c.customer_id WHERE o.status = 'delivered' GROUP BY c.customer_id ORDER BY total_spent DESC LIMIT 5",
+    "latency_ms": 328.4,
+    "correct": false,
+    "result_rows": [],
+    "result_row_count": 0,
+    "result_truncated": false,
+    "error": "no such column: o.total"
+  },
+  {
+    "id": "eval-0008",
+    "category": "simple_filter",
+    "question": "List all products in the Toys category, cheapest first.",
+    "gold_sql": "SELECT name, price FROM products WHERE category = 'Toys' ORDER BY price ASC",
+    "pred_sql": "SELECT name, price FROM products WHERE category = 'Toys' ORDER BY price ASC",
+    "latency_ms": 180.7,
+    "correct": true,
+    "result_rows": [
+      [
+        "Puzzle 1000pc",
+        16.37
+      ],
+      [
+        "RC Car",
+        193.1
+      ],
+      [
+        "Board Game: Strategy",
+        313.2
+      ],
+      [
+        "Building Blocks Set",
+        317.63
+      ]
+    ],
+    "result_row_count": 4,
+    "result_truncated": false
+  },
+  {
+    "id": "eval-0009",
+    "category": "simple_filter",
+    "question": "List the names of customers from USA.",
+    "gold_sql": "SELECT name FROM customers WHERE country = 'USA'",
+    "pred_sql": "SELECT name FROM customers WHERE country = 'USA'",
+    "latency_ms": 149.9,
+    "correct": true,
+    "result_rows": [
+      [
+        "Liam Smith"
+      ],
+      [
+        "Layla Khan"
+      ],
+      [
+        "Kai Khan"
+      ],
+      [
+        "Ethan Patel"
+      ],
+      [
+        "Ethan Rossi"
+      ],
+      [
+        "Liam Smith"
+      ]
+    ],
+    "result_row_count": 49,
+    "result_truncated": true
+  },
+  {
+    "id": "eval-0010",
+    "category": "join",
+    "question": "List support tickets with priority 'low' along with the customer's name and the assigned employee's name.",
+    "gold_sql": "SELECT t.ticket_id, c.name AS customer_name, e.name AS employee_name FROM support_tickets t JOIN customers c ON c.customer_id = t.customer_id LEFT JOIN employees e ON e.employee_id = t.assigned_employee_id WHERE t.priority = 'low'",
+    "pred_sql": "SELECT t.ticket_id, c.name AS customer_name, e.name AS employee_name FROM support_tickets t JOIN customers c ON c.customer_id = t.customer_id LEFT JOIN employees e ON e.employee_id = t.assigned_employee_id WHERE t.priority = 'low'",
+    "latency_ms": 325.3,
+    "correct": true,
+    "result_rows": [
+      [
+        5,
+        "Maya Chen",
+        "Ethan Khan"
+      ],
+      [
+        6,
+        "Jin Rossi",
+        "Ethan Khan"
+      ],
+      [
+        10,
+        "Owen Silva",
+        "Ethan Khan"
+      ],
+      [
+        11,
+        "Theo Rossi",
+        "Noah Khan"
+      ],
+      [
+        16,
+        "Noah Kim",
+        "Noah Mueller"
+      ],
+      [
+        21,
+        "Liam Smith",
+        "Noah Khan"
+      ]
+    ],
+    "result_row_count": 37,
+    "result_truncated": true
+  },
+  {
+    "id": "eval-0011",
+    "category": "having",
+    "question": "List categories where the average product price exceeds 100.",
+    "gold_sql": "SELECT category, ROUND(AVG(price),2) AS avg_price FROM products GROUP BY category HAVING AVG(price) > 100",
+    "pred_sql": "SELECT category, ROUND(AVG(price),2) AS avg_price FROM products GROUP BY category HAVING AVG(price) > 100",
+    "latency_ms": 223.7,
+    "correct": true,
+    "result_rows": [
+      [
+        "Books",
+        291.84
+      ],
+      [
+        "Electronics",
+        214.1
+      ],
+      [
+        "Home",
+        250.25
+      ],
+      [
+        "Sports",
+        236.61
+      ],
+      [
+        "Toys",
+        210.07
+      ]
+    ],
+    "result_row_count": 5,
+    "result_truncated": false
+  },
+  {
+    "id": "eval-0012",
+    "category": "simple_filter",
+    "question": "Who are our customers based in Germany?",
+    "gold_sql": "SELECT name FROM customers WHERE country = 'Germany'",
+    "pred_sql": "SELECT name FROM customers WHERE country = 'Germany'",
+    "latency_ms": 152.5,
+    "correct": true,
+    "result_rows": [
+      [
+        "Sofia Patel"
+      ],
+      [
+        "Layla Garcia"
+      ],
+      [
+        "Emma Mueller"
+      ],
+      [
+        "Maya Chen"
+      ],
+      [
+        "Aria Kim"
+      ],
+      [
+        "Ethan Mueller"
+      ]
+    ],
+    "result_row_count": 62,
+    "result_truncated": true
+  },
+  {
+    "id": "eval-0013",
+    "category": "having",
+    "question": "Which customers have placed more than 5 orders?",
+    "gold_sql": "SELECT c.name, COUNT(*) AS order_count FROM customers c JOIN orders o ON o.customer_id = c.customer_id GROUP BY c.customer_id HAVING COUNT(*) > 5 ORDER BY order_count DESC",
+    "pred_sql": "SELECT c.name, COUNT(*) AS order_count FROM customers c JOIN orders o ON o.customer_id = c.customer_id GROUP BY c.customer_id HAVING COUNT(*) > 5 ORDER BY order_count DESC",
+    "latency_ms": 273.9,
+    "correct": true,
+    "result_rows": [
+      [
+        "Sofia Patel",
+        8
+      ],
+      [
+        "Noah Kim",
+        8
+      ],
+      [
+        "Ines Smith",
+        8
+      ],
+      [
+        "Noah Silva",
+        8
+      ],
+      [
+        "Theo Silva",
+        8
+      ],
+      [
+        "Jin Chen",
+        8
+      ]
+    ],
+    "result_row_count": 32,
+    "result_truncated": true
+  },
+  {
+    "id": "eval-0014",
+    "category": "self_join",
+    "question": "List each employee's name along with their manager's name.",
+    "gold_sql": "SELECT e.name AS employee_name, m.name AS manager_name FROM employees e LEFT JOIN employees m ON e.manager_id = m.employee_id",
+    "pred_sql": "SELECT e.name, m.name FROM employees e LEFT JOIN employees m ON e.manager_id = m.employee_id",
+    "latency_ms": 196.6,
+    "correct": true,
+    "result_rows": [
+      [
+        "Noah Chen",
+        null
+      ],
+      [
+        "Sofia Smith",
+        null
+      ],
+      [
+        "Noah Khan",
+        "Noah Chen"
+      ],
+      [
+        "Liam Chen",
+        "Sofia Smith"
+      ],
+      [
+        "Ethan Khan",
+        "Noah Chen"
+      ],
+      [
+        "Lucas Smith",
+        "Noah Chen"
+      ]
+    ],
+    "result_row_count": 12,
+    "result_truncated": true
+  },
+  {
+    "id": "eval-0015",
+    "category": "simple_filter",
+    "question": "List the names of customers from UK.",
+    "gold_sql": "SELECT name FROM customers WHERE country = 'UK'",
+    "pred_sql": "SELECT name FROM customers WHERE country = 'UK'",
+    "latency_ms": 150.4,
+    "correct": true,
+    "result_rows": [
+      [
+        "Owen Silva"
+      ],
+      [
+        "Maya Nakamura"
+      ],
+      [
+        "Nadia Garcia"
+      ],
+      [
+        "Omar Nakamura"
+      ],
+      [
+        "Theo Rossi"
+      ],
+      [
+        "Lucas Kim"
+      ]
+    ],
+    "result_row_count": 45,
+    "result_truncated": true
+  },
+  {
+    "id": "eval-0016",
+    "category": "aggregation",
+    "question": "How many customers are in the 'gold' tier?",
+    "gold_sql": "SELECT COUNT(*) FROM customers WHERE tier = 'gold'",
+    "pred_sql": "SELECT COUNT(*) FROM customers WHERE tier = 'gold'",
+    "latency_ms": 156.5,
+    "correct": true,
+    "result_rows": [
+      [
+        94
+      ]
+    ],
+    "result_row_count": 1,
+    "result_truncated": false
+  },
+  {
+    "id": "eval-0017",
+    "category": "join",
+    "question": "Show order_id, customer name, and customer country for every order.",
+    "gold_sql": "SELECT o.order_id, c.name, c.country FROM orders o JOIN customers c ON o.customer_id = c.customer_id",
+    "pred_sql": "SELECT order_id, name, country FROM orders",
+    "latency_ms": 150.0,
+    "correct": false,
+    "result_rows": [],
+    "result_row_count": 0,
+    "result_truncated": false,
+    "error": "no such column: name"
+  },
+  {
+    "id": "eval-0018",
+    "category": "join",
+    "question": "For low-priority tickets, show the customer name and the employee handling it.",
+    "gold_sql": "SELECT t.ticket_id, c.name AS customer_name, e.name AS employee_name FROM support_tickets t JOIN customers c ON c.customer_id = t.customer_id LEFT JOIN employees e ON e.employee_id = t.assigned_employee_id WHERE t.priority = 'low'",
+    "pred_sql": "SELECT t.ticket_id, c.name AS customer_name, e.name AS employee_name FROM support_tickets t JOIN customers c ON c.customer_id = t.customer_id LEFT JOIN employees e ON e.employee_id = t.assigned_employee_id WHERE t.priority = 'low'",
+    "latency_ms": 323.6,
+    "correct": true,
+    "result_rows": [
+      [
+        5,
+        "Maya Chen",
+        "Ethan Khan"
+      ],
+      [
+        6,
+        "Jin Rossi",
+        "Ethan Khan"
+      ],
+      [
+        10,
+        "Owen Silva",
+        "Ethan Khan"
+      ],
+      [
+        11,
+        "Theo Rossi",
+        "Noah Khan"
+      ],
+      [
+        16,
+        "Noah Kim",
+        "Noah Mueller"
+      ],
+      [
+        21,
+        "Liam Smith",
+        "Noah Khan"
+      ]
+    ],
+    "result_row_count": 37,
+    "result_truncated": true
+  },
+  {
+    "id": "eval-0019",
+    "category": "subquery_scalar",
+    "question": "List products more expensive than the overall average price.",
+    "gold_sql": "SELECT name, price FROM products WHERE price > (SELECT AVG(price) FROM products)",
+    "pred_sql": "SELECT name, price FROM products WHERE price > (SELECT AVG(price) FROM products)",
+    "latency_ms": 178.8,
+    "correct": true,
+    "result_rows": [
+      [
+        "Mechanical Keyboard",
+        323.41
+      ],
+      [
+        "Webcam",
+        419.66
+      ],
+      [
+        "Bluetooth Speaker",
+        334.78
+      ],
+      [
+        "Desk Lamp",
+        270.43
+      ],
+      [
+        "Standing Desk",
+        374.1
+      ],
+      [
+        "Throw Blanket",
+        305.82
+      ]
+    ],
+    "result_row_count": 18,
+    "result_truncated": true
+  },
+  {
+    "id": "eval-0020",
+    "category": "negation_antijoin",
+    "question": "List products with no reviews at all.",
+    "gold_sql": "SELECT p.name FROM products p LEFT JOIN reviews r ON r.product_id = p.product_id WHERE r.review_id IS NULL",
+    "pred_sql": "SELECT p.name FROM products p LEFT JOIN reviews r ON r.product_id = p.product_id WHERE r.review_id IS NULL",
+    "latency_ms": 207.0,
+    "correct": true,
+    "result_rows": [],
+    "result_row_count": 0,
+    "result_truncated": false
+  },
+  {
+    "id": "eval-0021",
+    "category": "aggregation",
+    "question": "How many customers are in the 'platinum' tier?",
+    "gold_sql": "SELECT COUNT(*) FROM customers WHERE tier = 'platinum'",
+    "pred_sql": "SELECT COUNT(*) FROM customers WHERE tier = 'platinum'",
+    "latency_ms": 158.5,
+    "correct": true,
+    "result_rows": [
+      [
+        29
+      ]
+    ],
+    "result_row_count": 1,
+    "result_truncated": false
+  },
+  {
+    "id": "eval-0022",
+    "category": "simple_filter",
+    "question": "Who are our customers based in USA?",
+    "gold_sql": "SELECT name FROM customers WHERE country = 'USA'",
+    "pred_sql": "SELECT name FROM customers WHERE country = 'USA'",
+    "latency_ms": 154.0,
+    "correct": true,
+    "result_rows": [
+      [
+        "Liam Smith"
+      ],
+      [
+        "Layla Khan"
+      ],
+      [
+        "Kai Khan"
+      ],
+      [
+        "Ethan Patel"
+      ],
+      [
+        "Ethan Rossi"
+      ],
+      [
+        "Liam Smith"
+      ]
+    ],
+    "result_row_count": 49,
+    "result_truncated": true
+  },
+  {
+    "id": "eval-0023",
+    "category": "simple_filter",
+    "question": "Show all customer names where the country is Germany.",
+    "gold_sql": "SELECT name FROM customers WHERE country = 'Germany'",
+    "pred_sql": "SELECT name FROM customers WHERE country = 'Germany'",
+    "latency_ms": 149.5,
+    "correct": true,
+    "result_rows": [
+      [
+        "Sofia Patel"
+      ],
+      [
+        "Layla Garcia"
+      ],
+      [
+        "Emma Mueller"
+      ],
+      [
+        "Maya Chen"
+      ],
+      [
+        "Aria Kim"
+      ],
+      [
+        "Ethan Mueller"
+      ]
+    ],
+    "result_row_count": 62,
+    "result_truncated": true
+  },
+  {
+    "id": "eval-0024",
+    "category": "subquery_correlated",
+    "question": "Which customers have ordered every product in the Electronics category?",
+    "gold_sql": "SELECT c.name FROM customers c WHERE NOT EXISTS ( SELECT p.product_id FROM products p WHERE p.category = 'Electronics' AND NOT EXISTS ( SELECT 1 FROM orders o JOIN order_items oi ON oi.order_id = o.order_id WHERE o.customer_id = c.customer_id AND oi.product_id = p.product_id ) )",
+    "pred_sql": "SELECT c.name FROM customers c WHERE NOT EXISTS ( SELECT p.product_id FROM products p WHERE p.category = 'Electronics' AND NOT EXISTS ( SELECT 1 FROM orders o JOIN order_items oi ON oi.order_id = o.order_id WHERE o.customer_id = c.customer_id AND oi.product_id = p.product_id ) )",
+    "latency_ms": 376.4,
+    "correct": true,
+    "result_rows": [],
+    "result_row_count": 0,
+    "result_truncated": false
+  },
+  {
+    "id": "eval-0025",
+    "category": "date_range",
+    "question": "Count orders where the order date falls in 2024.",
+    "gold_sql": "SELECT COUNT(*) FROM orders WHERE strftime('%Y', order_date) = '2024'",
+    "pred_sql": "SELECT COUNT(*) FROM orders WHERE strftime('%Y', order_date) = '2024'",
+    "latency_ms": 195.6,
+    "correct": true,
+    "result_rows": [
+      [
+        186
+      ]
+    ],
+    "result_row_count": 1,
+    "result_truncated": false
+  },
+  {
+    "id": "eval-0026",
+    "category": "date_range",
+    "question": "How many orders were placed in 2026?",
+    "gold_sql": "SELECT COUNT(*) FROM orders WHERE strftime('%Y', order_date) = '2026'",
+    "pred_sql": "SELECT COUNT(*) FROM orders WHERE strftime('%Y', order_date) = '2026'",
+    "latency_ms": 204.5,
+    "correct": true,
+    "result_rows": [
+      [
+        414
+      ]
+    ],
+    "result_row_count": 1,
+    "result_truncated": false
+  },
+  {
+    "id": "eval-0027",
+    "category": "top_n",
+    "question": "List the 10 highest-priced products.",
+    "gold_sql": "SELECT name, price FROM products ORDER BY price DESC LIMIT 10",
+    "pred_sql": "SELECT name, price FROM products ORDER BY price DESC LIMIT 10",
+    "latency_ms": 174.3,
+    "correct": true,
+    "result_rows": [
+      [
+        "History of Computing",
+        437.65
+      ],
+      [
+        "Cookbook: Weeknight Dinners",
+        435.45
+      ],
+      [
+        "Webcam",
+        419.66
+      ],
+      [
+        "Digital Kitchen Scale",
+        405.26
+      ],
+      [
+        "Running Shoes",
+        379.8
+      ],
+      [
+        "Standing Desk",
+        374.1
+      ]
+    ],
+    "result_row_count": 10,
+    "result_truncated": true
+  }
+]
