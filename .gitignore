@@ -3,4 +3,6 @@ __pycache__/
 *.pyc
 observability/calls.db
 training/output/
+training/*.gguf
+.tools/
 .DS_Store

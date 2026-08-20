@@ -1,0 +1,43 @@
+{
+  "predictor": "ollama:sql-specialist",
+  "accuracy": 0.9285714285714286,
+  "n": 28,
+  "accuracy_by_category": {
+    "aggregation": 1.0,
+    "date_range": 1.0,
+    "having": 1.0,
+    "join": 0.75,
+    "multi_join": 1.0,
+    "negation_antijoin": 1.0,
+    "self_join": 1.0,
+    "simple_filter": 1.0,
+    "subquery_correlated": 1.0,
+    "subquery_scalar": 1.0,
+    "top_n": 0.5
+  },
+  "latency_ms": {
+    "p50": 206.50445902720094,
+    "p95": 371.4681250276044,
+    "mean": 228.4059137247303
+  },
+  "total_cost_usd": 0.0,
+  "cost_per_1k_usd": 0.0,
+  "failures": [
+    {
+      "id": "eval-0007",
+      "question": "Show the top 5 customers by total spend on delivered orders.",
+      "category": "top_n",
+      "gold_sql": "SELECT c.name, ROUND(SUM(oi.quantity * oi.unit_price), 2) AS total_spent FROM customers c JOIN orders o ON o.customer_id = c.customer_id AND o.status = 'delivered' JOIN order_items oi ON oi.order_id = o.order_id GROUP BY c.customer_id ORDER BY total_spent DESC LIMIT 5",
+      "pred_sql": "SELECT c.name, ROUND(SUM(o.total), 2) AS total_spent FROM customers c JOIN orders o ON o.customer_id = c.customer_id WHERE o.status = 'delivered' GROUP BY c.customer_id ORDER BY total_spent DESC LIMIT 5",
+      "exec_error": "execution error: no such column: o.total"
+    },
+    {
+      "id": "eval-0017",
+      "question": "Show order_id, customer name, and customer country for every order.",
+      "category": "join",
+      "gold_sql": "SELECT o.order_id, c.name, c.country FROM orders o JOIN customers c ON o.customer_id = c.customer_id",
+      "pred_sql": "SELECT order_id, name, country FROM orders",
+      "exec_error": "execution error: no such column: name"
+    }
+  ]
+}

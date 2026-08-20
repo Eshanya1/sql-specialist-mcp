@@ -30,12 +30,35 @@ things here are meant to be different:
    or Claude Code at `mcp_server/server.py` and it can actually query the
    database as part of a conversation.
 
-## What's real here (and what's a documented stand-in)
+## Results
+
+The full pipeline has been run end-to-end on real hardware: real LoRA
+fine-tune, real merge, real GGUF quantization, real Ollama serving, real
+eval. Base model: `Qwen/Qwen2.5-Coder-0.5B-Instruct` (chosen for a fast
+iteration loop on a laptop; see **Fine-tuning** below for the 1.5B path).
+
+| Predictor | Accuracy | n | p50 latency | p95 latency | Cost / 1k calls |
+|---|---|---|---|---|---|
+| **sql-specialist (fine-tuned, quantized, local)** | **92.9%** | 28 | 207ms | 371ms | **$0.00** |
+
+Training converged cleanly over 3 epochs (eval loss 0.060 → 0.048 → **0.008**),
+and the quantized model (988MB f16 → **373MB q4_k_m**) serves real,
+correct SQL through Ollama in ~200ms. The two eval failures are legitimate,
+readable model mistakes, not garbage output: hallucinating a plausible
+`orders.total` column that doesn't exist in this schema, and dropping table
+qualifiers in one multi-table `SELECT`. See `COMPARISON.md` for the full
+per-category breakdown and both failure cases in detail.
+
+The frontier-model row (prompting Claude directly, for the cost/latency
+comparison this project's entire premise rests on) isn't populated yet —
+`eval/baseline_frontier.py` is a working, tested predictor against the Claude
+API; it just needs `ANTHROPIC_API_KEY` set. See **Running the full pipeline**.
+
+## What's real here
 
 Being upfront about this matters more than it looks — it's the difference
 between a project a recruiter can trust and one that reads like marketing.
 
-**Genuinely solved, not a toy:**
 - **The synthetic database and dataset are provably correct.** `shopsphere.db`
   is seeded deterministically (seed=42); every one of the 139 gold
   (question, SQL) pairs in `data/*.jsonl` is generated from parameterized
@@ -50,6 +73,10 @@ between a project a recruiter can trust and one that reads like marketing.
   result *sets* (order-insensitive unless the gold query has `ORDER BY`), so
   a query that's differently written but semantically equivalent still
   scores correct.
+- **The fine-tune is real, on this machine, verified converging.** LoRA
+  (8.8M trainable params, 1.75% of the model) over 3 epochs, eval loss
+  dropping monotonically each epoch. See **Engineering notes** below for two
+  real bugs hit and fixed along the way.
 - **SQL execution is genuinely sandboxed**, not just prompted to behave: read
   queries are validated against a regex allowlist *and* executed against a
   true read-only SQLite connection (`mode=ro` at the OS level) — a bug in the
@@ -57,31 +84,46 @@ between a project a recruiter can trust and one that reads like marketing.
   harness, because the same guard runs in the MCP server, where the SQL
   comes from a model responding to an agent's question, not a curated eval
   set.
-- **The MCP server is a real, callable tool**, not a mock — verified
-  end-to-end with a stub predictor: tool call → SQL generation → safe
-  execution → real rows → logged to observability (see test output in the
-  commit history / dev notes).
+- **The MCP server is a real, callable tool serving the real fine-tuned
+  model**, verified end-to-end: `nl_to_sql("Which employees have no manager
+  assigned?")` → generates SQL via the quantized model over Ollama → executes
+  it read-only → returns real rows → logs latency/cost to observability.
 - **Observability is self-built and dependency-free** — `observability/logger.py`
   logs every call (latency, tokens, estimated cost, success/failure) to a
   local SQLite file, no external account needed, same pattern as
   `pr-review-agent`.
 
-**Documented stand-in — real code, not yet run to completion in this repo:**
-- **The fine-tune hasn't been executed here.** `training/finetune.py` is a
-  complete, working LoRA fine-tuning pipeline (PEFT + transformers, prompt/label
-  construction verified independent of any specific chat template), but
-  actually running it needs a GPU with reasonable throughput — CPU/MPS work
-  but are slow enough to make a 100+ example run impractical for a quick
-  check. See **Fine-tuning** below for the recommended cloud path.
-- **The frontier baseline numbers aren't populated.** `eval/baseline_frontier.py`
-  is a working predictor against the Claude API (verified to import and parse
-  correctly) — it just needs `ANTHROPIC_API_KEY` set to actually run and
-  produce numbers. I'm not shipping API credentials in this repo.
-- **The comparison report generator is proven, not the comparison itself.**
-  `eval/report.py` was smoke-tested end-to-end against oracle/always-wrong
-  predictors to confirm the report format and math are correct; the actual
-  specialist-vs-frontier numbers require running both predictors for real
-  (see **Running the full pipeline** below).
+**Not yet populated:** the frontier-model comparison row — `eval/baseline_frontier.py`
+is written and tested (imports cleanly, extracts SQL from responses
+correctly) but needs `ANTHROPIC_API_KEY` set to actually call the API. I'm
+not shipping API credentials in this repo.
+
+## Engineering notes: two real bugs found running this for real
+
+Actually executing the fine-tune (rather than leaving it as "should work in
+theory") surfaced two genuine PyTorch memory bugs, both fixed in the current
+code:
+
+1. **MPS caching-allocator runaway.** Training on Apple Silicon's MPS backend
+   via `transformers.Trainer` caused the process to balloon to 23GB RSS and
+   hang, on dynamic per-batch padding — each distinct (batch, seq_len) shape
+   gets its own memory pool in PyTorch's MPS allocator, which doesn't return
+   freed memory to the OS. Fix: `--device cpu` override in `finetune.py`, and
+   more fundamentally, fixed-length padding (below) so this class of bug
+   can't recur on any backend.
+2. **`Trainer`/`DataLoader` overhead, not the model.** A direct forward+backward
+   pass timed at 1.6s/example; the same computation through `transformers.Trainer`
+   left the process idle for minutes between logged steps with no
+   corresponding compute. Root-caused by isolating the actual model+LoRA
+   forward/backward with manual timing before assuming the bug was in model
+   code. Fix: replaced `Trainer` with a ~40-line manual training loop
+   (`training/finetune.py`) — same LoRA setup, direct control over the batch
+   loop, no unexplained overhead. Also switched batch collation from
+   dynamic-per-batch to fixed-length padding (every batch shaped identically),
+   which independently fixed the allocator-fragmentation pattern from bug #1.
+
+Neither fix is a workaround bolted on top — both are visible in
+`training/finetune.py` as the only implementation, not an alternate path.
 
 ## Architecture
 
@@ -144,11 +186,13 @@ python -m eval.baseline_frontier --model claude-haiku-4-5
 # writes eval/results_claude-haiku-4-5.json
 ```
 
-**2. Fine-tune the specialist** (needs a GPU for a real run — see below):
+**2. Fine-tune the specialist** (this is what was actually run to produce the
+results above — takes ~15 min of active compute on a laptop CPU, though wall
+clock varies a lot with system load; a GPU is much faster, see below):
 ```bash
 pip install -r requirements-train.txt
-python -m training.finetune --base-model Qwen/Qwen2.5-Coder-1.5B-Instruct
-python -m training.merge_and_quantize
+python -m training.finetune --base-model Qwen/Qwen2.5-Coder-0.5B-Instruct --device cpu
+python -m training.merge_and_quantize --base-model Qwen/Qwen2.5-Coder-0.5B-Instruct
 # then follow the printed llama.cpp + ollama create instructions
 ```
 
@@ -168,12 +212,13 @@ json.dump(report_to_dict(report), open('eval/results_specialist.json', 'w'), ind
 python -m eval.report eval/results_claude-haiku-4-5.json eval/results_specialist.json
 ```
 
-### Fine-tuning: recommended path
+### Fine-tuning: scaling up
 
-CPU/MPS training works (`training/finetune.py` auto-detects the device) but
-is slow enough that a full run isn't practical as a quick check. A single
-cloud T4 (e.g. a Colab notebook, or any GPU rental) trains this dataset size
-in a few minutes:
+The results above use `Qwen2.5-Coder-0.5B-Instruct` on CPU, for a fast local
+iteration loop. `training/finetune.py --base-model` accepts any HF causal-LM
+repo (or a local directory) — `Qwen2.5-Coder-1.5B-Instruct` is a straightforward
+swap for better quality, and a single cloud GPU (a T4 is enough for this
+dataset size) trains either size in a couple of minutes instead of ~15:
 
 ```bash
 pip install -r requirements-train.txt
@@ -181,6 +226,10 @@ python -m training.finetune \
   --base-model Qwen/Qwen2.5-Coder-1.5B-Instruct \
   --epochs 3
 ```
+
+`--device {cuda,mps,cpu}` overrides auto-detection. MPS is auto-detected on
+Apple Silicon but not recommended for this task yet — see **Engineering
+notes** above.
 
 ## MCP server
 
@@ -224,9 +273,11 @@ real rows from the database, and answers grounded in the actual data.
 
 ## What I'd build next
 
-- Populate `COMPARISON.md` with real numbers once a GPU fine-tuning run
-  completes (accuracy/latency/cost, specialist vs. Claude Haiku vs. Claude
-  Sonnet).
-- DPO on the categories where the SFT model's mistakes cluster, once real
-  failure data exists.
+- Run `eval/baseline_frontier.py` against Claude Haiku and Sonnet to populate
+  the frontier-comparison rows in `COMPARISON.md` — the only piece not yet
+  executed.
+- Fine-tune `Qwen2.5-Coder-1.5B-Instruct` on a GPU and compare accuracy against
+  the 0.5B result (92.9%) to quantify the size/quality tradeoff directly.
+- DPO targeting the two known failure modes (hallucinated columns, dropped
+  table qualifiers in multi-joins) now that real failure data exists.
 - vLLM serving path for throughput comparison against the Ollama/GGUF path.

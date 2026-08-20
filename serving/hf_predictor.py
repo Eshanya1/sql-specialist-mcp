@@ -18,7 +18,7 @@ class HFLocalPredictor:
         self.tokenizer = AutoTokenizer.from_pretrained(model_dir)
         device = "cuda" if torch.cuda.is_available() else ("mps" if torch.backends.mps.is_available() else "cpu")
         dtype = torch.bfloat16 if device == "cuda" else torch.float32
-        self.model = AutoModelForCausalLM.from_pretrained(model_dir, torch_dtype=dtype).to(device)
+        self.model = AutoModelForCausalLM.from_pretrained(model_dir, dtype=dtype).to(device)
         self.device = device
 
     def predict(self, question: str) -> Prediction:
