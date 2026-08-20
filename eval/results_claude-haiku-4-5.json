@@ -1,0 +1,131 @@
+{
+  "predictor": "frontier:claude-haiku-4-5",
+  "accuracy": 0.5357142857142857,
+  "n": 28,
+  "accuracy_by_category": {
+    "aggregation": 0.5,
+    "date_range": 1.0,
+    "having": 0.0,
+    "join": 0.25,
+    "multi_join": 0.0,
+    "negation_antijoin": 1.0,
+    "self_join": 1.0,
+    "simple_filter": 0.6666666666666666,
+    "subquery_correlated": 1.0,
+    "subquery_scalar": 0.0,
+    "top_n": 0.5
+  },
+  "latency_ms": {
+    "p50": 1055.1888749469072,
+    "p95": 1883.9941669721156,
+    "mean": 1149.244607106084
+  },
+  "total_cost_usd": 0.029814999999999994,
+  "cost_per_1k_usd": 1.0648214285714284,
+  "failures": [
+    {
+      "id": "eval-0001",
+      "question": "How many orders does each customer have with status 'cancelled'? Show customer name and count.",
+      "category": "aggregation",
+      "gold_sql": "SELECT c.name, COUNT(*) AS order_count FROM customers c JOIN orders o ON o.customer_id = c.customer_id WHERE o.status = 'cancelled' GROUP BY c.customer_id ORDER BY order_count DESC",
+      "pred_sql": "SELECT c.name, COUNT(o.order_id) AS cancelled_order_count\nFROM customers c\nLEFT JOIN orders o ON c.customer_id = o.customer_id AND o.status = 'cancelled'\nGROUP BY c.customer_id, c.name\nORDER BY c.customer_id;",
+      "exec_error": null
+    },
+    {
+      "id": "eval-0002",
+      "question": "List support tickets with priority 'urgent' along with the customer's name and the assigned employee's name.",
+      "category": "join",
+      "gold_sql": "SELECT t.ticket_id, c.name AS customer_name, e.name AS employee_name FROM support_tickets t JOIN customers c ON c.customer_id = t.customer_id LEFT JOIN employees e ON e.employee_id = t.assigned_employee_id WHERE t.priority = 'urgent'",
+      "pred_sql": "SELECT st.ticket_id, c.name, e.name, st.priority\nFROM support_tickets st\nJOIN customers c ON st.customer_id = c.customer_id\nLEFT JOIN employees e ON st.assigned_employee_id = e.employee_id\nWHERE st.priority = 'urgent'",
+      "exec_error": null
+    },
+    {
+      "id": "eval-0003",
+      "question": "How many orders does each customer have with status 'pending'? Show customer name and count.",
+      "category": "aggregation",
+      "gold_sql": "SELECT c.name, COUNT(*) AS order_count FROM customers c JOIN orders o ON o.customer_id = c.customer_id WHERE o.status = 'pending' GROUP BY c.customer_id ORDER BY order_count DESC",
+      "pred_sql": "SELECT c.name, COUNT(o.order_id) AS pending_order_count\nFROM customers c\nLEFT JOIN orders o ON c.customer_id = o.customer_id AND o.status = 'pending'\nGROUP BY c.customer_id, c.name\nORDER BY c.customer_id;",
+      "exec_error": null
+    },
+    {
+      "id": "eval-0006",
+      "question": "For 'gold'-tier customers, list each order along with the product names and quantities purchased.",
+      "category": "multi_join",
+      "gold_sql": "SELECT o.order_id, c.name AS customer_name, p.name AS product_name, oi.quantity FROM customers c JOIN orders o ON o.customer_id = c.customer_id JOIN order_items oi ON oi.order_id = o.order_id JOIN products p ON p.product_id = oi.product_id WHERE c.tier = 'gold'",
+      "pred_sql": "SELECT \n    o.order_id,\n    p.name,\n    oi.quantity\nFROM customers c\nJOIN orders o ON c.customer_id = o.customer_id\nJOIN order_items oi ON o.order_id = oi.order_id\nJOIN products p ON oi.product_id = p.product_id\nWHERE c.tier = 'gold'\nORDER BY o.order_id, p.name;",
+      "exec_error": null
+    },
+    {
+      "id": "eval-0007",
+      "question": "Show the top 5 customers by total spend on delivered orders.",
+      "category": "top_n",
+      "gold_sql": "SELECT c.name, ROUND(SUM(oi.quantity * oi.unit_price), 2) AS total_spent FROM customers c JOIN orders o ON o.customer_id = c.customer_id AND o.status = 'delivered' JOIN order_items oi ON oi.order_id = o.order_id GROUP BY c.customer_id ORDER BY total_spent DESC LIMIT 5",
+      "pred_sql": "SELECT c.customer_id, c.name, SUM(oi.quantity * oi.unit_price) as total_spend\nFROM customers c\nJOIN orders o ON c.customer_id = o.customer_id\nJOIN order_items oi ON o.order_id = oi.order_id\nWHERE o.status = 'delivered'\nGROUP BY c.customer_id, c.name\nORDER BY total_spend DESC\nLIMIT 5;",
+      "exec_error": null
+    },
+    {
+      "id": "eval-0008",
+      "question": "List all products in the Toys category, cheapest first.",
+      "category": "simple_filter",
+      "gold_sql": "SELECT name, price FROM products WHERE category = 'Toys' ORDER BY price ASC",
+      "pred_sql": "SELECT product_id, name, price FROM products WHERE category = 'Toys' ORDER BY price ASC;",
+      "exec_error": null
+    },
+    {
+      "id": "eval-0010",
+      "question": "List support tickets with priority 'low' along with the customer's name and the assigned employee's name.",
+      "category": "join",
+      "gold_sql": "SELECT t.ticket_id, c.name AS customer_name, e.name AS employee_name FROM support_tickets t JOIN customers c ON c.customer_id = t.customer_id LEFT JOIN employees e ON e.employee_id = t.assigned_employee_id WHERE t.priority = 'low'",
+      "pred_sql": "SELECT \n    st.ticket_id,\n    c.name AS customer_name,\n    e.name AS employee_name,\n    st.priority\nFROM support_tickets st\nJOIN customers c ON st.customer_id = c.customer_id\nLEFT JOIN employees e ON st.assigned_employee_id = e.employee_id\nWHERE st.priority = 'low';",
+      "exec_error": null
+    },
+    {
+      "id": "eval-0011",
+      "question": "List categories where the average product price exceeds 100.",
+      "category": "having",
+      "gold_sql": "SELECT category, ROUND(AVG(price),2) AS avg_price FROM products GROUP BY category HAVING AVG(price) > 100",
+      "pred_sql": "SELECT category\nFROM products\nGROUP BY category\nHAVING AVG(price) > 100;",
+      "exec_error": null
+    },
+    {
+      "id": "eval-0012",
+      "question": "Who are our customers based in Germany?",
+      "category": "simple_filter",
+      "gold_sql": "SELECT name FROM customers WHERE country = 'Germany'",
+      "pred_sql": "SELECT name, email FROM customers WHERE country = 'Germany';",
+      "exec_error": null
+    },
+    {
+      "id": "eval-0013",
+      "question": "Which customers have placed more than 5 orders?",
+      "category": "having",
+      "gold_sql": "SELECT c.name, COUNT(*) AS order_count FROM customers c JOIN orders o ON o.customer_id = c.customer_id GROUP BY c.customer_id HAVING COUNT(*) > 5 ORDER BY order_count DESC",
+      "pred_sql": "SELECT c.name\nFROM customers c\nWHERE (SELECT COUNT(*) FROM orders o WHERE o.customer_id = c.customer_id) > 5\nORDER BY c.name;",
+      "exec_error": null
+    },
+    {
+      "id": "eval-0018",
+      "question": "For low-priority tickets, show the customer name and the employee handling it.",
+      "category": "join",
+      "gold_sql": "SELECT t.ticket_id, c.name AS customer_name, e.name AS employee_name FROM support_tickets t JOIN customers c ON c.customer_id = t.customer_id LEFT JOIN employees e ON e.employee_id = t.assigned_employee_id WHERE t.priority = 'low'",
+      "pred_sql": "SELECT c.name, e.name\nFROM support_tickets st\nJOIN customers c ON st.customer_id = c.customer_id\nLEFT JOIN employees e ON st.assigned_employee_id = e.employee_id\nWHERE st.priority = 'low';",
+      "exec_error": null
+    },
+    {
+      "id": "eval-0019",
+      "question": "List products more expensive than the overall average price.",
+      "category": "subquery_scalar",
+      "gold_sql": "SELECT name, price FROM products WHERE price > (SELECT AVG(price) FROM products)",
+      "pred_sql": "SELECT product_id, name, category, price, stock_quantity\nFROM products\nWHERE price > (SELECT AVG(price) FROM products)\nORDER BY price DESC;",
+      "exec_error": null
+    },
+    {
+      "id": "eval-0022",
+      "question": "Who are our customers based in USA?",
+      "category": "simple_filter",
+      "gold_sql": "SELECT name FROM customers WHERE country = 'USA'",
+      "pred_sql": "SELECT name, email FROM customers WHERE country = 'USA';",
+      "exec_error": null
+    }
+  ]
+}

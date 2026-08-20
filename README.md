@@ -32,27 +32,41 @@ things here are meant to be different:
 
 ## Results
 
-The full pipeline has been run end-to-end on real hardware: real LoRA
-fine-tune, real merge, real GGUF quantization, real Ollama serving, real
-eval. Base model: `Qwen/Qwen2.5-Coder-0.5B-Instruct` (chosen for a fast
-iteration loop on a laptop; see **Fine-tuning** below for the 1.5B path).
+The full pipeline has been run end-to-end on real hardware, both sides: real
+LoRA fine-tune, real merge, real GGUF quantization, real Ollama serving,
+real eval — and a real frontier baseline against the live Claude API.
+Base model: `Qwen/Qwen2.5-Coder-0.5B-Instruct` (chosen for a fast iteration
+loop on a laptop; see **Fine-tuning** below for the 1.5B path).
 
 | Predictor | Accuracy | n | p50 latency | p95 latency | Cost / 1k calls |
 |---|---|---|---|---|---|
-| **sql-specialist (fine-tuned, quantized, local)** | **92.9%** | 28 | 207ms | 371ms | **$0.00** |
+| frontier: Claude Haiku 4.5 (prompted) | 53.6% | 28 | 1055ms | 1884ms | $1.06 |
+| **sql-specialist (fine-tuned, quantized, local)** | **92.9%** | 28 | **207ms** | **371ms** | **$0.00** |
 
-Training converged cleanly over 3 epochs (eval loss 0.060 → 0.048 → **0.008**),
-and the quantized model (988MB f16 → **373MB q4_k_m**) serves real,
-correct SQL through Ollama in ~200ms. The two eval failures are legitimate,
-readable model mistakes, not garbage output: hallucinating a plausible
-`orders.total` column that doesn't exist in this schema, and dropping table
-qualifiers in one multi-table `SELECT`. See `COMPARISON.md` for the full
-per-category breakdown and both failure cases in detail.
+**Read this with the caveat, not just the headline.** I manually audited
+every one of Claude Haiku's 13 measured "failures" against this eval set:
+**zero were SQL logic errors.** All 13 were column-selection or row-order
+convention mismatches — e.g. returning `(name, email)` when the gold answer
+was just `(name)`, or correct rows in a different order than an `ORDER BY`
+the original question never actually specified. The strict execution-accuracy
+metric (`eval/execution.py` compares result rows column-for-column) scores
+those identically to a genuinely wrong query, which the fine-tuned specialist
+never produces because it memorized this dataset's exact conventions from
+111 training examples — something a frontier model prompted zero-shot has no
+way to know. Full failure-by-failure taxonomy in `COMPARISON.md`.
 
-The frontier-model row (prompting Claude directly, for the cost/latency
-comparison this project's entire premise rests on) isn't populated yet —
-`eval/baseline_frontier.py` is a working, tested predictor against the Claude
-API; it just needs `ANTHROPIC_API_KEY` set. See **Running the full pipeline**.
+So: **the accuracy gap is real but partly an artifact of what the eval
+rewards**, not purely a reasoning gap. **The latency and cost gap is not an
+artifact** — 207ms/local/free vs. 1055ms/$1.06-per-1k-calls is the actual,
+unhedged result of running a quantized 0.5B model locally instead of calling
+an API, and it's the comparison this project's premise actually rests on.
+
+The specialist's own 2 failures (out of 28) were genuine logic errors, not
+formatting mismatches — hallucinating a plausible `orders.total` column that
+doesn't exist in this schema, and dropping a table qualifier in one
+multi-table `SELECT`. Training converged cleanly over 3 epochs (eval loss
+0.060 → 0.048 → **0.008**), and the quantized model (988MB f16 →
+**373MB q4_k_m**) serves through Ollama in ~200ms.
 
 ## What's real here
 
@@ -93,10 +107,10 @@ between a project a recruiter can trust and one that reads like marketing.
   local SQLite file, no external account needed, same pattern as
   `pr-review-agent`.
 
-**Not yet populated:** the frontier-model comparison row — `eval/baseline_frontier.py`
-is written and tested (imports cleanly, extracts SQL from responses
-correctly) but needs `ANTHROPIC_API_KEY` set to actually call the API. I'm
-not shipping API credentials in this repo.
+- **The frontier baseline is real too** — `eval/baseline_frontier.py` ran
+  against the live Claude API (Claude Haiku 4.5), not just imported cleanly.
+  Its "failures" turned out to reveal a real eval-methodology finding — see
+  **Results** above and `COMPARISON.md` for the full manual failure audit.
 
 ## Engineering notes: two real bugs found running this for real
 
@@ -273,11 +287,18 @@ real rows from the database, and answers grounded in the actual data.
 
 ## What I'd build next
 
-- Run `eval/baseline_frontier.py` against Claude Haiku and Sonnet to populate
-  the frontier-comparison rows in `COMPARISON.md` — the only piece not yet
-  executed.
+- **Normalize the eval for column supersets** — score a prediction correct
+  if the gold-requested columns' values are present, rather than requiring
+  an exact column-for-column match. This is the fix implied by the failure
+  taxonomy in `COMPARISON.md`; it would very likely close most of the
+  measured 53.6%→92.9% gap and produce a comparison that isolates actual
+  reasoning ability from convention-matching.
+- Run `eval/baseline_frontier.py` against Claude Sonnet too, for a
+  stronger-model comparison point (Haiku is the cheap/fast tier; Sonnet is
+  the "how much does model strength alone close the gap" question).
 - Fine-tune `Qwen2.5-Coder-1.5B-Instruct` on a GPU and compare accuracy against
   the 0.5B result (92.9%) to quantify the size/quality tradeoff directly.
-- DPO targeting the two known failure modes (hallucinated columns, dropped
-  table qualifiers in multi-joins) now that real failure data exists.
+- DPO targeting the specialist's two known failure modes (hallucinated
+  columns, dropped table qualifiers in multi-joins) now that real failure
+  data exists.
 - vLLM serving path for throughput comparison against the Ollama/GGUF path.

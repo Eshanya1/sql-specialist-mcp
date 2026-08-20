@@ -22,6 +22,26 @@ PRICING_PER_MTOK = {
     "claude-opus-5": (5.00, 25.00),
 }
 
+# Appended only to the frontier baseline's prompt, not the shared training
+# prompt -- the specialist implicitly learned this column-selection
+# convention from its training examples (every gold query selects exactly
+# the columns the question asks for, never a defensive SELECT * or extra
+# ID/email/timestamp columns "for context"). A frontier model prompted with
+# the bare schema has no way to know that convention and, not unreasonably,
+# tends to return more columns than asked for -- which execution-accuracy
+# scoring (comparing result tuples position-for-position) then marks wrong
+# even when the requested data is present and correct. Without this
+# addendum, an early run scored the specialist at 92.9% vs frontier's 46.4%
+# with a manual failure audit showing nearly every "failure" was an
+# otherwise-correct query with extra columns, not a reasoning error --
+# a misleading comparison this addendum exists to correct.
+COLUMN_DISCIPLINE_ADDENDUM = (
+    "\n\nSelect exactly the columns the question asks for, in the order asked, "
+    "and nothing else -- no SELECT *, no extra ID/email/timestamp columns "
+    "'for context'. If the question asks a yes/no or count question, return "
+    "only that count/aggregate column."
+)
+
 
 class FrontierPredictor:
     def __init__(self, model: str = "claude-haiku-4-5"):
@@ -35,7 +55,7 @@ class FrontierPredictor:
             resp = self.client.messages.create(
                 model=self.model,
                 max_tokens=1024,
-                system=SYSTEM_PROMPT,
+                system=SYSTEM_PROMPT + COLUMN_DISCIPLINE_ADDENDUM,
                 messages=[{"role": "user", "content": question}],
             )
         except Exception as e:
