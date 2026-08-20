@@ -1,3 +1,16 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="A fine-tuned 0.5B model outsprints Claude on its one job. Click through 28 real recorded eval runs comparing a LoRA fine-tuned specialist against Claude Haiku 4.5 on natural-language-to-SQL.">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Query the Specialist">
+<meta property="og:description" content="A fine-tuned 0.5B model outsprints Claude on its one job. Click through 28 real recorded eval runs comparing a LoRA fine-tuned specialist against Claude Haiku 4.5 on natural-language-to-SQL.">
+<meta property="og:url" content="https://eshanya1.github.io/sql-specialist-mcp/">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Query the Specialist">
+<meta name="twitter:description" content="A fine-tuned 0.5B model outsprints Claude on its one job. Click through 28 real recorded eval runs comparing a LoRA fine-tuned specialist against Claude Haiku 4.5 on natural-language-to-SQL.">
 <title>Query the Specialist</title>
 <style>
 @font-face {
@@ -531,6 +544,9 @@ footer a:hover { color: var(--amber); border-color: var(--amber); }
 ::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: 6px; }
 ::-webkit-scrollbar-track { background: transparent; }
 </style>
+</head>
+<body>
+
 
 <div class="wrap">
   <div class="eyebrow"><span class="dot"></span>live cassette &middot; 28 real eval runs &middot; no server, no API calls</div>
@@ -765,3 +781,6 @@ qlist.addEventListener('click', (e) => {
 const firstBtn = qlist.querySelector('.qitem');
 if (firstBtn) { firstBtn.classList.add('active'); renderDetail(0); }
 </script>
+
+</body>
+</html>
